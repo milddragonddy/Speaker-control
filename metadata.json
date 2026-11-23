@@ -1,0 +1,6 @@
+{
+  "name": "QuietCare",
+  "description": "Hospital quiet-zone decibel monitor, authorized speaker & audio controller, and public noise complaint reporting app.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

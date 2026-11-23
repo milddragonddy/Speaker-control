@@ -1,0 +1,110 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidComplaint(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.reporterName is string && data.reporterName.size() >= 1 && data.reporterName.size() <= 80 &&
+             data.facilityName is string && data.facilityName.size() >= 1 && data.facilityName.size() <= 120 &&
+             data.sourceType in ['LOUDSPEAKER', 'VEHICLE', 'EVENT_PA', 'OTHER'] &&
+             data.measuredDb is int && data.measuredDb >= 0 && data.measuredDb <= 160 &&
+             data.peakDb is int && data.peakDb >= 0 && data.peakDb <= 160 &&
+             data.severity in ['MODERATE', 'HIGH', 'CRITICAL'] &&
+             data.status in ['SUBMITTED', 'ESCALATED', 'RESOLVED'] &&
+             data.description is string && data.description.size() >= 1 && data.description.size() <= 1000 &&
+             (!('authorityResponse' in data) || (data.authorityResponse is string && data.authorityResponse.size() <= 500));
+    }
+
+    function isValidNoiseLog(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.zoneName is string && data.zoneName.size() >= 1 && data.zoneName.size() <= 100 &&
+             data.avgDb is int && data.avgDb >= 0 && data.avgDb <= 160 &&
+             data.peakDb is int && data.peakDb >= 0 && data.peakDb <= 160 &&
+             data.thresholdDb is int && data.thresholdDb >= 20 && data.thresholdDb <= 120 &&
+             data.autoGuarded is bool;
+    }
+
+    match /users/{userId}/complaints/{complaintId} {
+      allow get: if isSignedIn() && request.auth.uid == userId && isValidId(complaintId);
+      allow list: if isSignedIn() && request.auth.uid == userId;
+
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(complaintId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'userId', 'reporterName', 'facilityName', 'sourceType',
+                         'measuredDb', 'peakDb', 'severity', 'status', 'description',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'reporterName', 'facilityName', 'sourceType',
+                         'measuredDb', 'peakDb', 'severity', 'status', 'description',
+                         'authorityResponse', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().status == 'SUBMITTED' &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       isValidComplaint(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidComplaint(incoming()) &&
+                       request.auth.uid == userId &&
+                       isValidId(complaintId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       existing().status != 'RESOLVED' &&
+                       (
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'facilityName', 'sourceType', 'description', 'authorityResponse', 'status', 'updatedAt'
+                         ]) ||
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'status', 'authorityResponse', 'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(complaintId);
+    }
+
+    match /users/{userId}/noiseLogs/{logId} {
+      allow get: if isSignedIn() && request.auth.uid == userId && isValidId(logId);
+      allow list: if isSignedIn() && request.auth.uid == userId;
+
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(logId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'userId', 'zoneName', 'avgDb', 'peakDb', 'thresholdDb', 'autoGuarded', 'createdAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'zoneName', 'avgDb', 'peakDb', 'thresholdDb', 'autoGuarded', 'createdAt'
+                       ]) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       isValidNoiseLog(incoming());
+
+      allow update: if false;
+      allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(logId);
+    }
+  }
+}

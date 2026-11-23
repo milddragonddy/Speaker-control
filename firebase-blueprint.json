@@ -1,0 +1,132 @@
+{
+  "entities": {
+    "NoiseComplaint": {
+      "title": "NoiseComplaint",
+      "description": "Public and hospital noise disturbance complaint submitted by an authenticated user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the reporting user."
+        },
+        "reporterName": {
+          "type": "string",
+          "description": "Display name or role of the reporter."
+        },
+        "facilityName": {
+          "type": "string",
+          "description": "Hospital, ward, or health department location affected."
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": ["LOUDSPEAKER", "VEHICLE", "EVENT_PA", "OTHER"],
+          "description": "Primary noise source category."
+        },
+        "measuredDb": {
+          "type": "integer",
+          "description": "Measured average ambient decibel level."
+        },
+        "peakDb": {
+          "type": "integer",
+          "description": "Measured peak decibel level."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["MODERATE", "HIGH", "CRITICAL"],
+          "description": "Severity classification based on dB and impact."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["SUBMITTED", "ESCALATED", "RESOLVED"],
+          "description": "Current tracking status of the complaint."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed report of patient impact and noise disturbance."
+        },
+        "authorityResponse": {
+          "type": "string",
+          "description": "Optional note on authority response or follow-up."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when complaint was created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when complaint was last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "reporterName",
+        "facilityName",
+        "sourceType",
+        "measuredDb",
+        "peakDb",
+        "severity",
+        "status",
+        "description",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "NoiseLog": {
+      "title": "NoiseLog",
+      "description": "Measured decibel threshold violation snapshot captured by the QuietCare monitor.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user."
+        },
+        "zoneName": {
+          "type": "string",
+          "description": "Hospital quiet-zone preset name."
+        },
+        "avgDb": {
+          "type": "integer",
+          "description": "Average measured decibel level."
+        },
+        "peakDb": {
+          "type": "integer",
+          "description": "Peak measured decibel level."
+        },
+        "thresholdDb": {
+          "type": "integer",
+          "description": "Configured hospital quiet-zone dB threshold."
+        },
+        "autoGuarded": {
+          "type": "boolean",
+          "description": "Whether Auto-Guard automatically reduced connected speaker volume."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the log was recorded (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "zoneName",
+        "avgDb",
+        "peakDb",
+        "thresholdDb",
+        "autoGuarded",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/complaints/{complaintId}": {
+      "schema": { "$ref": "#/entities/NoiseComplaint" },
+      "description": "User-owned hospital noise disturbance complaints."
+    },
+    "/users/{userId}/noiseLogs/{logId}": {
+      "schema": { "$ref": "#/entities/NoiseLog" },
+      "description": "User-owned decibel violation evidence logs."
+    }
+  }
+}

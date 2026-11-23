@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">QuietCare</string>
+    <string name="app_subtitle">ဆေးရုံနှင့် ကျန်းမာရေးဌာန ဆူညံသံထိန်းချုပ်ရေး</string>
+    <string name="nav_monitor">တိုင်းတာမှု</string>
+    <string name="nav_speakers">စပီကာ</string>
+    <string name="nav_complaints">တိုင်ကြားရန်</string>
+    <string name="nav_guide">လမ်းညွှန်</string>
+    <string name="sign_in_google">Google ဖြင့် ဝင်ရောက်မည်</string>
+    <string name="sign_out">အကောင့်မှ ထွက်မည်</string>
+    <string name="cd_hero_banner">Hospital quiet zone sanctuary illustration</string>
+    <string name="cd_mic_toggle">Toggle microphone decibel monitoring</string>
+    <string name="cd_add_complaint">Create noise complaint</string>
+    <string name="cd_share_report">Share official complaint report</string>
+</resources>
