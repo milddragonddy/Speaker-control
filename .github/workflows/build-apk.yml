@@ -19,13 +19,16 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android 36.1 SDK & Accept Licenses
+      - name: Accept Android SDK licenses
         run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager "platforms;android-36.1" "build-tools;36.0.0"
+          mkdir -p "$ANDROID_HOME/licenses"
+          grep -qxF "24333f8a63b6825ea9c5514f83c2829b004d1fee" "$ANDROID_HOME/licenses/android-sdk-license" 2>/dev/null || echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> "$ANDROID_HOME/licenses/android-sdk-license"
+          grep -qxF "84831b9409646a918e30573bab4c9c91346d8abd" "$ANDROID_HOME/licenses/android-sdk-preview-license" 2>/dev/null || echo "84831b9409646a918e30573bab4c9c91346d8abd" >> "$ANDROID_HOME/licenses/android-sdk-preview-license"
+          SDK_MANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f 2>/dev/null | head -n 1 || true)
+          if [ -n "$SDK_MANAGER" ]; then
+            set +o pipefail
+            yes | "$SDK_MANAGER" --licenses >/dev/null 2>&1 || true
+          fi
 
       - name: Restore or create debug keystore
         run: |
@@ -36,7 +39,6 @@ jobs:
               -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 \
               -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
-          ls -la debug.keystore app/google-services.json || true
 
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
